@@ -28,13 +28,13 @@ class EncoderRNN(nn.Module):
         self.gru = nn.GRU(hidden_size, hidden_size)
 
     def forward(self, input, hidden):
-        embedded = self.embedding(input).view(1, -1)
+        embedded = self.embedding(input).view(1, 1, -1)
         output = embedded
         output, hidden = self.gru(output, hidden)
         return output, hidden
 
     def reset_hidden(self):
-        return torch.zeros(1, self.hidden_size)
+        return torch.zeros(1, 1, self.hidden_size)
 
 class DecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size):
@@ -49,14 +49,14 @@ class DecoderRNN(nn.Module):
 
     # takes hidden as an argument which allows us to use teacher forcing
     def forward(self, input, hidden):
-        output = self.embedding(input).view(1, -1)
+        output = self.embedding(input).view(1, 1, -1)
         output = F.relu(output)
         output, hidden = self.gru(output, hidden)
         output = self.softmax(self.out(output[0]))
         return output, hidden
 
     def reset_hidden(self):
-        return torch.zeros(1, self.hidden_size)
+        return torch.zeros(1, 1,  self.hidden_size)
 
 class AttentionDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p = 0.1, max_length = MAX_LENGTH):
@@ -78,7 +78,7 @@ class AttentionDecoderRNN(nn.Module):
         self.out = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, hidden, encoder_outputs):
-        embedded = self.embedding(input).view(1, -1)
+        embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
         attn_weights = F.softmax(self.attn(torch.cat((embedded[0], hidden[0]), 1)), dim = 1)
@@ -95,7 +95,7 @@ class AttentionDecoderRNN(nn.Module):
         return output, hidden, attn_weights
 
     def reset_hidden(self):
-        return torch.zeros(1, self.hidden_size)
+        return torch.zeros(1,1 , self.hidden_size)
 
 
 # helps use keep track of the vocabulary

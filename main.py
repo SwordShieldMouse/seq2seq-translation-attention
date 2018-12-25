@@ -41,6 +41,7 @@ decoder_optim = torch.optim.Adam(decoder.parameters(), lr = learning_rate)
 attn_decoder_optim = torch.optim.Adam(attn_decoder.parameters(), lr = learning_rate)
 
 # train
+print("Training:")
 for _ in range(epochs):
     for batch_x, batch_y in trainloader:
         # x, y are batches of sentences from input, output language
@@ -56,12 +57,12 @@ for _ in range(epochs):
             input_len = input_tensor.size(0)
             output_len = output_tensor.size(0)
 
-            encoder_outputs = torch.tensor((MAX_LENGTH, hidden_size))
+            encoder_outputs = torch.zeros([MAX_LENGTH, hidden_size])
 
             # run the encoder
             for ix in range(input_len):
                 encoder_output, encoder_hidden = encoder(input_tensor[ix], encoder_hidden)
-                encoder_outputs[ix] = encoder_output[0]
+                encoder_outputs[ix] = encoder_output[0][0]
 
             # run the decoder
             # feed the SOS token as input
@@ -77,8 +78,8 @@ for _ in range(epochs):
             if use_teacher_forcing is True:
                 for ix in range(output_len):
                     decoder_output, decoder_hidden, attn_weights = attn_decoder(decoder_input, decoder_hidden, encoder_outputs)
-                    loss += criterion(decoder_output, target_tensor[ix])
-                    decoder_input = target_tensor[ix] # teacher forcing rather than actual output
+                    loss += criterion(decoder_output, output_tensor[ix])
+                    decoder_input = output_tensor[ix] # teacher forcing rather than actual output
             else:
                 for ix in range(output_len):
                     decoder_output, decoder_hidden, attn_weights = attn_decoder(decoder_input, decoder_hidden, encoder_outputs)
@@ -88,14 +89,16 @@ for _ in range(epochs):
                     # can just be index since we pass it into an embedding
                     decoder_input = topi.squeeze().detach() # no teacher forcing, so use the actual output
 
-                    loss += criterion(decoder_output, target_tensor[ix])
+                    loss += criterion(decoder_output, output_tensor[ix])
                     if decoder_input.item() == EOS_token:
                         break
 
-            loss.backward()
+        loss.backward()
 
-            encoder_optim.step()
-            attn_decoder_optim.step()
+        encoder_optim.step()
+        attn_decoder_optim.step()
+
+print("Training complete")
 
 # evaluate
 for x, y in testloader:
