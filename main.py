@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 # holds all the main classes
 from helper import *
 
+
 data = Data()
 input_size, output_size = data.get_vocab_lens()
 input_lang, output_lang = data.get_names()
@@ -57,7 +58,7 @@ for _ in range(epochs):
             input_len = input_tensor.size(0)
             output_len = output_tensor.size(0)
 
-            encoder_outputs = torch.zeros([MAX_LENGTH, hidden_size])
+            encoder_outputs = torch.zeros([MAX_LENGTH, hidden_size], device = device)
 
             # run the encoder
             for ix in range(input_len):
@@ -66,7 +67,7 @@ for _ in range(epochs):
 
             # run the decoder
             # feed the SOS token as input
-            decoder_input = torch.tensor([[SOS_token]])
+            decoder_input = torch.tensor([[SOS_token]], device = device)
             # use the last hidden state of the encoder as the 1st hidden state of the decoder
             decoder_hidden = encoder_hidden
 

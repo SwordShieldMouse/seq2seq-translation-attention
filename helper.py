@@ -5,6 +5,10 @@ from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 import unicodedata
 
+
+# gpu usage
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 SOS_token = 0 # start of string
 EOS_token = 1 # end of string
 
@@ -34,7 +38,7 @@ class EncoderRNN(nn.Module):
         return output, hidden
 
     def reset_hidden(self):
-        return torch.zeros(1, 1, self.hidden_size)
+        return torch.zeros(1, 1, self.hidden_size, device = device)
 
 class DecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size):
@@ -56,7 +60,7 @@ class DecoderRNN(nn.Module):
         return output, hidden
 
     def reset_hidden(self):
-        return torch.zeros(1, 1,  self.hidden_size)
+        return torch.zeros(1, 1,  self.hidden_size, device = device)
 
 class AttentionDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p = 0.1, max_length = MAX_LENGTH):
@@ -95,7 +99,7 @@ class AttentionDecoderRNN(nn.Module):
         return output, hidden, attn_weights
 
     def reset_hidden(self):
-        return torch.zeros(1,1 , self.hidden_size)
+        return torch.zeros(1,1 , self.hidden_size, device = device)
 
 
 # helps use keep track of the vocabulary
@@ -127,7 +131,7 @@ def tensor_from_sentence(vocab, sentence):
     # returns column of indices of words in sentence
     ixs = ixs_from_sentence(vocab, sentence)
     ixs.append(EOS_token)
-    return torch.tensor(ixs).view(-1, 1)
+    return torch.tensor(ixs, device = device).view(-1, 1)
 
 def tensors_from_pair(input_vocab, output_vocab, pair):
     input_tensor = tensor_from_sentence(input_vocab, pair[0])
@@ -210,14 +214,14 @@ def evaluate(encoder, decoder, data, x, y, max_length = MAX_LENGTH):
         input_tensor = tensor_from_sentence(data.input_vocab, x)
         input_length = input_tensor.size(0)
 
-        encoder_outputs = torch.zeros((MAX_LENGTH, encoder.hidden_size))
+        encoder_outputs = torch.zeros((MAX_LENGTH, encoder.hidden_size), device = device)
         encoder_hidden = encoder.reset_hidden()
 
         for ix in range(input_length):
             encoder_output, encoder_hidden = encoder(input_tensor[ix], encoder_hidden)
             encoder_outputs[ix] = encoder_output[0]
 
-        decoder_input = torch.tensor([[SOS_token]])
+        decoder_input = torch.tensor([[SOS_token]], device = device)
         decoder_hidden = encoder_hidden
         decoded_words = []
 
