@@ -32,9 +32,9 @@ testloader = DataLoader(test_data, shuffle = True)
 
 teacher_forcing_ratio = 0.5
 
-encoder = EncoderRNN(input_size, hidden_size)
-decoder = DecoderRNN(hidden_size, output_size)
-attn_decoder = AttentionDecoderRNN(hidden_size, output_size)
+encoder = EncoderRNN(input_size, hidden_size).to(device)
+decoder = DecoderRNN(hidden_size, output_size).to(device)
+attn_decoder = AttentionDecoderRNN(hidden_size, output_size).to(device)
 
 criterion = nn.NLLLoss()
 encoder_optim = torch.optim.Adam(encoder.parameters(), lr = learning_rate)
